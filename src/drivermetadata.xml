@@ -1,0 +1,29 @@
+<Driver Description="Shell to run IxChariot tssts" MainClass="driver.IxChariotControllerDriver" Name="IxChariotControllerDriver" Version="1.0.0">
+    <Layout>
+         <Category Name="Hidden Commands">
+            <Command Name="keep_alive" DisplayName="Keep Alive" Tags="" Description="" EnableCancellation="true"/>
+        </Category>
+
+		<Command Name="load_config" DisplayName="Load configuration" Description="Reserve endpoints and load configuration" >
+	    	<Parameters>
+            	<Parameter Name="ixc_config" Type="String" Mandatory="True"
+                           DisplayName="IxChariot config" Description="IxLoad config to load" />
+            </Parameters>
+        </Command>
+        <Command Name="start_test" DisplayName="Start Test" Description="">
+            <Parameters>
+            	<Parameter Name="blocking" Type="Lookup" Mandatory="False" AllowedValues="True ,False" DefaultValue="True"
+                           DisplayName="Block the command until test finish to run" Description="" />
+            </Parameters>
+        </Command>
+        <Command Name="stop_test" DisplayName="Stop Test" Description="">
+        </Command>
+        <Command Name="get_statistics" DisplayName="Get Statistics" Description="Get statistics view" >
+         <Parameters>
+            	<Parameter Name="view_name" Type="String" Mandatory="True"
+                           DisplayName="View Name" Description="" />
+            </Parameters>
+        </Command>
+
+    </Layout>
+</Driver>

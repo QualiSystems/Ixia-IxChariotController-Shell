@@ -1,0 +1,7 @@
+shell:
+    name: Ixia-IxChariotController-Shell
+    author: Yoram Shamir
+    email: yoram-s@quali.com
+    description: Ixia IxChariot controller shell
+    version: 0.2.0
+    driver_name: IxChariotControllerDriver
