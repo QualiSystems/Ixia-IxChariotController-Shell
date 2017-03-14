@@ -30,7 +30,7 @@ class IxChariotControllerDriver(ResourceDriverInterface):
         :rtype: cloudshell.shell.core.driver_context.AutoLoadDetails
         """
 
-        return self.handler.get_inventory(context)
+        return self.handler.get_inventory()
 
     def load_config(self, context, ixc_config):
         """ Load IxChariot configuration and select end points.

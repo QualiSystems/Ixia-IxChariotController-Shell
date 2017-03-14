@@ -18,15 +18,20 @@ class IxcHandler(object):
 
         log_file = 'IXC_logger.log'
         logging.basicConfig(filename=log_file, level=logging.DEBUG)
-        self.logger = logging.getLogger('root')
+        self.logger = logging.getLogger('log')
         self.logger.addHandler(logging.FileHandler(log_file))
         self.logger.setLevel('DEBUG')
+        self.result = 0
+
+
+
 
         sys.path.append(client_install_path)
         webapi = imp.load_source('webapi', os.path.join(client_install_path, 'ixia/webapi.py'))
         self.ixchariotapi = imp.load_source('ixchariotapi', os.path.join(client_install_path, 'ixchariotApi.py'))
 
         self.connection = webapi.webApi.connect('https://' + address, 'v1', None, username, password)
+        self.session = None
 
     def tearDown(self):
         if self.session:
@@ -50,7 +55,8 @@ class IxcHandler(object):
         dst_resources = []
         reservation_details = api.GetReservationDetails(reservationId=reservation_id)
         for resource in reservation_details.ReservationDescription.Resources:
-            if resource.ResourceModelName == 'Generic Traffic Generator Endpoint':
+            self.logger.info("Resource name *******:%s"%(resource.ResourceModelName))
+            if resource.ResourceFamilyName == 'IxChariot test IP':
                 ep_name = resource.Name
                 logical_name = api.GetAttributeValue(resourceFullPath=ep_name, attributeName="Logical Name").Value
                 if logical_name.lower() in ['src', 'source']:
@@ -90,6 +96,7 @@ class IxcHandler(object):
             self.result = self.session.startTest()
             time.sleep(4)
 
+
     def stop_test(self):
         self.session.stopTest()
 
@@ -100,7 +107,9 @@ class IxcHandler(object):
         :param view_name: IxChariot results view to retrieve (csv file name in c:/temp/ixChariotTestResults.zip).
         """
 
+
         filePath = "c:/temp/ixChariotTestResults.zip"
+
         with open(filePath, "wb+") as statsFile:
             self.connection.getStatsCsvZipToFile(self.result.testId, statsFile)
 
