@@ -16,15 +16,12 @@ class IxcHandler(object):
         """
         """
 
-        log_file = 'IXC_logger.log'
+        log_file = 'c:/temp/IXC_logger.log'
         logging.basicConfig(filename=log_file, level=logging.DEBUG)
         self.logger = logging.getLogger('log')
         self.logger.addHandler(logging.FileHandler(log_file))
         self.logger.setLevel('DEBUG')
         self.result = 0
-
-
-
 
         sys.path.append(client_install_path)
         webapi = imp.load_source('webapi', os.path.join(client_install_path, 'ixia/webapi.py'))
@@ -55,7 +52,7 @@ class IxcHandler(object):
         dst_resources = []
         reservation_details = api.GetReservationDetails(reservationId=reservation_id)
         for resource in reservation_details.ReservationDescription.Resources:
-            self.logger.info("Resource name *******:%s"%(resource.ResourceModelName))
+            self.logger.info("Resource name *******:%s" % (resource.ResourceModelName))
             if resource.ResourceFamilyName == 'IxChariot test IP':
                 ep_name = resource.Name
                 logical_name = api.GetAttributeValue(resourceFullPath=ep_name, attributeName="Logical Name").Value
@@ -96,7 +93,6 @@ class IxcHandler(object):
             self.result = self.session.startTest()
             time.sleep(4)
 
-
     def stop_test(self):
         self.session.stopTest()
 
@@ -106,7 +102,6 @@ class IxcHandler(object):
         :type context: cloudshell.shell.core.driver_context.ResourceRemoteCommandContext
         :param view_name: IxChariot results view to retrieve (csv file name in c:/temp/ixChariotTestResults.zip).
         """
-
 
         filePath = "c:/temp/ixChariotTestResults.zip"
 

@@ -57,6 +57,9 @@ docs/_build/
 
 # PyBuilder
 target/
-cloudshell_config.yml
+
+.project
+.pydevproject
+.settings
 
 *.zip
