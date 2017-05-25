@@ -1,6 +1,6 @@
 install:
-    host: localhost
+    host: 172.16.1.103
     port: 9000
-    username: admin
-    password: admin
+    username: testqa
+    password: 12345qawsedrf
     domain: Global

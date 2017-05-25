@@ -12,7 +12,7 @@
         </Command>
         <Command Name="start_test" DisplayName="Start Test" Description="">
             <Parameters>
-            	<Parameter Name="blocking" Type="Lookup" Mandatory="False" AllowedValues="True ,False" DefaultValue="True"
+            	<Parameter Name="blocking" Type="Lookup" Mandatory="False" AllowedValues="True,False" DefaultValue="True"
                            DisplayName="Block the command until test finish to run" Description="" />
             </Parameters>
         </Command>

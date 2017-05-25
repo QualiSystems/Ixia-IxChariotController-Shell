@@ -8,16 +8,18 @@ Tests for `IxChariotControllerDriver`
 import unittest
 import yaml
 
-import cloudshell.helpers.scripts.cloudshell_scripts_helpers as helpers
-import cloudshell.helpers.scripts.cloudshell_dev_helpers as dev_helpers
+from cloudshell.api.cloudshell_api import CloudShellAPISession
 
-from src.ixc_handler import IxcHandler
+import tg_helper
+from driver import IxChariotControllerDriver
 
-reservation_id = '762716df-cc40-41d0-8ee8-f6f9095c853a'
+server_address = 'ixchariot.corp.airties.com'
+server_user = 'fetullah.turkeli@airties.com'
+server_password = '123456789aA.'
 
-address = 'ixchariot.corp.airties.com'
+client_install_path = "c:/"
 
-ixc_config = 'tcp sample'
+ixc_config = 'erztest2'
 
 
 class TestIxChariotControllerDriver(unittest.TestCase):
@@ -30,36 +32,33 @@ class TestIxChariotControllerDriver(unittest.TestCase):
         password = doc['install']['password']
         domain = doc['install']['domain']
         host = doc['install']['host']
-        port = doc['install']['port']
 
-        dev_helpers.attach_to_cloudshell_as(username, password, domain, reservation_id, host, port)
-        self.api = helpers.get_api_session()
-        reservation = self.api.GetReservationDetails(reservation_id)
-
-        for resource in reservation.ReservationDescription.Resources:
-            if resource.ResourceFamilyName == 'Traffic Generator Controller':
-                controller = resource
-                break
-
-        self.handler = IxcHandler()
-
-        address = controller.FullAddress
-        username = self.api.GetAttributeValue(resourceFullPath=controller.Name, attributeName='User').Value
-        password = self.api.GetAttributeValue(resourceFullPath=controller.Name, attributeName='Password').Value
-        client_install_path = self.api.GetAttributeValue(resourceFullPath=controller.Name,
-                                                         attributeName='Client Install Path').Value
-        self.handler.initialize(address, username, password, client_install_path)
+        self.session = CloudShellAPISession(host, username, password, domain)
+        self.context = tg_helper.create_context(self.session, 'ixchariot test', 'IxChariot Controller',
+                                                client_install_path, server_address)
+        self.context.resource.attributes.update({'User': server_user,
+                                                 'Password': server_password})
+        self.driver = IxChariotControllerDriver()
+        self.driver.initialize(self.context)
 
     def tearDown(self):
-        self.handler.tearDown()
+        self.driver.cleanup()
+
+    def testInit(self):
+        pass
 
     def testLoadConfig(self):
-        self.handler.load_config(self.api, reservation_id, ixc_config)
 
-        self.handler.start_test('True')
+        reservation_ports = tg_helper.get_reservation_ports(self.session, self.context.reservation.reservation_id,
+                                                            'Traffic Generator Test IP')
+        self.driver.load_config(self.context, ixc_config)
 
-        self.handler.start_test('False')
-        self.handler.stop_test()
+        self.driver.start_test(self.context, 'True')
+        print self.driver.get_statistics(self.context, 'ixchariot')
+
+        self.driver.start_test(self.context, 'False')
+        self.driver.stop_test(self.context)
+        print self.driver.get_statistics(self.context, 'ixchariot')
 
 if __name__ == '__main__':
     import sys

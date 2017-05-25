@@ -9,6 +9,8 @@ import zipfile
 from cloudshell.shell.core.driver_context import AutoLoadDetails
 from cloudshell.shell.core.session.cloudshell_session import CloudShellSessionContext
 
+import tg_helper
+
 
 class IxcHandler(object):
 
@@ -16,14 +18,10 @@ class IxcHandler(object):
         """
         """
 
-        log_file = 'c:/temp/IXC_logger.log'
-        logging.basicConfig(filename=log_file, level=logging.DEBUG)
-        self.logger = logging.getLogger('log')
-        self.logger.addHandler(logging.FileHandler(log_file))
-        self.logger.setLevel('DEBUG')
-        self.result = 0
+        self.logger = tg_helper.create_logger('c:/temp/ixchariot_controller_logger.txt')
 
         sys.path.append(client_install_path)
+        self.logger.info(os.path.join(client_install_path, 'ixia/webapi.py'))
         webapi = imp.load_source('webapi', os.path.join(client_install_path, 'ixia/webapi.py'))
         self.ixchariotapi = imp.load_source('ixchariotapi', os.path.join(client_install_path, 'ixchariotApi.py'))
 
@@ -37,7 +35,7 @@ class IxcHandler(object):
     def get_inventory(self):
         return AutoLoadDetails([], [])
 
-    def load_config(self, api, reservation_id, ixc_config):
+    def load_config(self, context, ixc_config):
         """
         :param reservation_id: current reservation ID
         :param ixc_config: IxChariot configuration name.
@@ -45,24 +43,22 @@ class IxcHandler(object):
 
         self.session = self.connection.createSession('ixchariot')
         self.session.startSession()
-
         self.session.loadConfiguration(ixc_config)
+
+        reservation_id = context.reservation.reservation_id
+        my_api = CloudShellSessionContext(context).get_api()
 
         src_resources = []
         dst_resources = []
-        reservation_details = api.GetReservationDetails(reservationId=reservation_id)
-        for resource in reservation_details.ReservationDescription.Resources:
-            self.logger.info("Resource name *******:%s" % (resource.ResourceModelName))
-            if resource.ResourceFamilyName == 'IxChariot test IP':
-                ep_name = resource.Name
-                logical_name = api.GetAttributeValue(resourceFullPath=ep_name, attributeName="Logical Name").Value
-                if logical_name.lower() in ['src', 'source']:
-                    src_resources.append(ep_name.split('/')[1])
-                elif logical_name.lower() in ['dst', 'destination']:
-                    dst_resources.append(ep_name.split('/')[1])
-                else:
-                    self.logger.info('Ignore EP {} - logical name {} not in [src, source, dst, destination]'.
-                                     format(ep_name, logical_name))
+        for ep in tg_helper.get_reservation_ports(my_api, reservation_id, 'Traffic Generator Test IP'):
+            logical_name = my_api.GetAttributeValue(ep.Name, 'Logical Name').Value.strip()
+            if logical_name.lower() in ['src', 'source']:
+                src_resources.append(ep.Name.split('/')[1])
+            elif logical_name.lower() in ['dst', 'destination']:
+                dst_resources.append(ep.Name.split('/')[1])
+            else:
+                self.logger.info('Ignore EP {} - logical name {} not in [src, source, dst, destination]'.
+                                 format(ep.Name, logical_name))
 
         if not src_resources:
             raise Exception('No Src resources')
@@ -87,7 +83,7 @@ class IxcHandler(object):
         """
         """
 
-        if blocking == 'True':
+        if blocking.lower().strip() == 'true':
             self.result = self.session.runTest()
         else:
             self.result = self.session.startTest()
@@ -98,22 +94,24 @@ class IxcHandler(object):
 
     def get_statistics(self, context, view_name):
         """
-        :param context: the context the command runs on
         :type context: cloudshell.shell.core.driver_context.ResourceRemoteCommandContext
         :param view_name: IxChariot results view to retrieve (csv file name in c:/temp/ixChariotTestResults.zip).
         """
 
-        filePath = "c:/temp/ixChariotTestResults.zip"
+        reservation_id = context.reservation.reservation_id
+        ts = time.ctime().replace(' ', '_').replace(':', '-')
+        filename = 'c:/temp/IxChariotShellResults/' + reservation_id + '/' + ts + '.zip'
+        if not os.path.exists(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
 
-        with open(filePath, "wb+") as statsFile:
+        with open(filename, "wb+") as statsFile:
             self.connection.getStatsCsvZipToFile(self.result.testId, statsFile)
 
-        archive = zipfile.ZipFile(filePath, 'r')
-        csv = archive.read(view_name + '.csv')
+        archive = zipfile.ZipFile(filename, 'r')
+        output = archive.read(view_name + '.csv')
 
-        reservation_id = context.reservation.reservation_id
-        my_api = CloudShellSessionContext(context).get_api()
-        my_api.WriteMessageToReservationOutput(reservation_id, csv)
+        tg_helper.attach_stats_csv(context, self.logger, view_name, output)
+        return output
 
     #
     # Private auxiliary methods.
