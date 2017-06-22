@@ -14,12 +14,12 @@ import tg_helper
 from driver import IxChariotControllerDriver
 
 server_address = 'ixchariot.corp.airties.com'
-server_user = 'fetullah.turkeli@airties.com'
-server_password = '123456789aA.'
+server_user = 'ixchariot@airties.com'
+server_password = 'QAteam2017'
 
 client_install_path = "c:/"
 
-ixc_config = 'erztest2'
+ixc_config = 'TestShell_Unicast_TCP'
 
 
 class TestIxChariotControllerDriver(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestIxChariotControllerDriver(unittest.TestCase):
         host = doc['install']['host']
 
         self.session = CloudShellAPISession(host, username, password, domain)
-        self.context = tg_helper.create_context(self.session, 'ixchariot test', 'IxChariot Controller',
+        self.context = tg_helper.create_context(self.session, '[Mkoy-CTI] CTI Mesh Setups', 'IxChariot Controller',
                                                 client_install_path, server_address)
         self.context.resource.attributes.update({'User': server_user,
                                                  'Password': server_password})
@@ -47,11 +47,17 @@ class TestIxChariotControllerDriver(unittest.TestCase):
     def testInit(self):
         pass
 
-    def testLoadConfig(self):
+    def test_load_config(self):
 
         reservation_ports = tg_helper.get_reservation_ports(self.session, self.context.reservation.reservation_id,
                                                             'Traffic Generator Test IP')
-        self.driver.load_config(self.context, ixc_config)
+        self.session.SetAttributeValue(reservation_ports[0].Name, 'Logical Name', 'Src')
+        self.session.SetAttributeValue(reservation_ports[1].Name, 'Logical Name', 'Dst')
+        print self.driver.load_config(self.context, ixc_config)
+
+    def test_run_test(self):
+
+        self.test_load_config()
 
         self.driver.start_test(self.context, 'True')
         print self.driver.get_statistics(self.context, 'ixchariot')

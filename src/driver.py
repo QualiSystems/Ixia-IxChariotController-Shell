@@ -1,5 +1,6 @@
 
 from cloudshell.shell.core.resource_driver_interface import ResourceDriverInterface
+from cloudshell.shell.core.session.cloudshell_session import CloudShellSessionContext
 
 import tg_helper
 from ixc_handler import IxcHandler
@@ -30,8 +31,11 @@ class IxChariotControllerDriver(ResourceDriverInterface):
         """
 
         tg_helper.enqueue_keep_alive(context)
-        self.handler.load_config(context, ixc_config)
-        return ixc_config + ' loaded, endpoints reserved'
+        session_id = self.handler.load_config(context, ixc_config)
+        my_api = CloudShellSessionContext(context).get_api()
+        my_api.WriteMessageToReservationOutput(context.reservation.reservation_id,
+                                               ixc_config + ' loaded, endpoints reserved')
+        return session_id
 
     def start_test(self, context, blocking):
         """

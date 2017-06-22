@@ -1,6 +1,5 @@
 
 import sys
-import logging
 import imp
 import time
 import os
@@ -78,6 +77,8 @@ class IxcHandler(object):
             self.session.httpPost(network_url + 'destinationEndpoints', data=ep)
 
         self.logger.info("Load Configuration Completed")
+
+        return self.session.sessionId
 
     def start_test(self, blocking):
         """
