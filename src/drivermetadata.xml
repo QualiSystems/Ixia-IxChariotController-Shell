@@ -1,4 +1,4 @@
-<Driver Description="Shell to run IxChariot tssts" MainClass="driver.IxChariotControllerDriver" Name="IxChariotControllerDriver" Version="1.0.0">
+<Driver Description="Shell to run IxChariot tssts" MainClass="driver.IxChariotControllerDriver" Name="IxChariotControllerDriver" Version="1.1.1">
     <Layout>
          <Category Name="Hidden Commands">
             <Command Name="keep_alive" DisplayName="Keep Alive" Tags="" Description="" EnableCancellation="true"/>
