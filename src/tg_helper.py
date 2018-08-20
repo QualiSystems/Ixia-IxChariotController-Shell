@@ -62,6 +62,7 @@ def create_context(session, env_name, resource_name, client_install_path, contro
     context.connectivity = ConnectivityContext()
     context.connectivity.server_address = 'localhost'
     context.connectivity.admin_auth_token = session.token_id
+    context.connectivity.cloudshell_api_scheme = CloudShellSessionContext.DEFAULT_API_SCHEME
 
     response = session.CreateImmediateTopologyReservation('tgn unittest', 'admin', 60, False, False, 0, env_name,
                                                           [], [], [])

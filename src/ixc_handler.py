@@ -8,16 +8,19 @@ import zipfile
 from cloudshell.shell.core.driver_context import AutoLoadDetails
 from cloudshell.shell.core.session.cloudshell_session import CloudShellSessionContext
 
-import tg_helper
+from cloudshell.traffic import tg_helper
 
 
 class IxcHandler(object):
 
-    def initialize(self, address, username, password, client_install_path):
-        """
-        """
+    def initialize(self, context, logger):
 
-        self.logger = tg_helper.create_logger('c:/temp/ixchariot_controller_logger.txt')
+        self.logger = logger
+
+        address = context.resource.attributes['Controller Address']
+        username = context.resource.attributes['User']
+        password = context.resource.attributes['Password']
+        client_install_path = context.resource.attributes['Client Install Path']
 
         sys.path.append(client_install_path)
         self.logger.info(os.path.join(client_install_path, 'ixia/webapi.py'))
@@ -28,8 +31,7 @@ class IxcHandler(object):
         self.session = None
 
     def tearDown(self):
-        if self.session:
-            self.session.stopSession()
+        self.del_session()
 
     def get_inventory(self):
         return AutoLoadDetails([], [])
@@ -76,6 +78,8 @@ class IxcHandler(object):
             ep = self.ixchariotapi.getEndpointFromResourcesLibrary(self.session, dst_ep)
             self.session.httpPost(network_url + 'destinationEndpoints', data=ep)
 
+        # In case of multiple eps delay is required to make sure configuration completed (based on trial and error).
+        time.sleep(4)
         self.logger.info("Load Configuration Completed")
 
         return self.session.sessionId
@@ -113,6 +117,16 @@ class IxcHandler(object):
 
         tg_helper.attach_stats_csv(context, self.logger, view_name, output)
         return output
+
+    def end_session(self):
+        if self.session:
+            self.session.stopSession()
+
+    def del_session(self):
+        if self.session:
+            if self.session.httpGet().state.lower() in ['starting', 'active']:
+                self.end_session()
+            self.session.httpDelete()
 
     #
     # Private auxiliary methods.

@@ -1,27 +1,18 @@
 
-from cloudshell.shell.core.resource_driver_interface import ResourceDriverInterface
+import time
+
 from cloudshell.shell.core.session.cloudshell_session import CloudShellSessionContext
 
-import tg_helper
+from cloudshell.traffic.driver import TrafficControllerDriver
+
 from ixc_handler import IxcHandler
 
 
-class IxChariotControllerDriver(ResourceDriverInterface):
+class IxChariotControllerDriver(TrafficControllerDriver):
 
     def __init__(self):
+        super(self.__class__, self).__init__()
         self.handler = IxcHandler()
-
-    def initialize(self, context):
-        """
-        :param context: ResourceCommandContext,ReservationContextDetailsobject with all Resource Attributes inside
-        :type context:  context: cloudshell.shell.core.driver_context.ResourceRemoteCommandContext
-        """
-
-        address = context.resource.attributes['Controller Address']
-        username = context.resource.attributes['User']
-        password = context.resource.attributes['Password']
-        client_install_path = context.resource.attributes['Client Install Path']
-        self.handler.initialize(address, username, password, client_install_path)
 
     def load_config(self, context, ixc_config):
         """ Load IxChariot configuration and select end points.
@@ -30,7 +21,6 @@ class IxChariotControllerDriver(ResourceDriverInterface):
         :param ixc_config: IxChariot configuration name.
         """
 
-        tg_helper.enqueue_keep_alive(context)
         session_id = self.handler.load_config(context, ixc_config)
         my_api = CloudShellSessionContext(context).get_api()
         my_api.WriteMessageToReservationOutput(context.reservation.reservation_id,
@@ -54,13 +44,21 @@ class IxChariotControllerDriver(ResourceDriverInterface):
     def get_statistics(self, context, view_name):
         return self.handler.get_statistics(context, view_name)
 
+    def end_session(self, context):
+        self.handler.end_session()
+
+    def del_session(self, context):
+        self.handler.del_session()
+
+    #
+    # Parent commands are not visible so we re define them in child.
+    #
+
+    def initialize(self, context):
+        super(self.__class__, self).initialize(context)
+
     def cleanup(self):
-        self.handler.tearDown()
-        pass
+        super(self.__class__, self).cleanup()
 
     def keep_alive(self, context, cancellation_context):
-
-        while not cancellation_context.is_cancelled:
-            pass
-        if cancellation_context.is_cancelled:
-            self.handler.tearDown()
+        super(self.__class__, self).keep_alive(context, cancellation_context)

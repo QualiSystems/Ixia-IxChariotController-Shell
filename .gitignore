@@ -63,3 +63,5 @@ target/
 .settings
 
 *.zip
+.pytest_cache
+.settings/org.eclipse.core.resources.prefs

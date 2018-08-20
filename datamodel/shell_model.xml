@@ -6,7 +6,7 @@
     <ShellModel Family="Traffic Generator Controller">
         <ResourceModel Name="IxChariot Controller" Description="IxChariot controller" SupportsConcurrentCommands="true">
 			<AttachedAttributes>
-        		<AttachedAttribute Name="Client Install Path" IsOverridable="true" IsLocal="true">
+        		<AttachedAttribute Name="Client Install Path" IsOverridable="true" IsLocal="true" UserInput="true">
             		<AllowedValues />
           		</AttachedAttribute>
         		<AttachedAttribute Name="Controller Address" IsOverridable="true" IsLocal="true" UserInput="true">
@@ -15,10 +15,10 @@
         		<AttachedAttribute Name="Controller TCP Port" IsOverridable="true" IsLocal="true">
             		<AllowedValues />
           		</AttachedAttribute>
-        		<AttachedAttribute Name="Password" IsOverridable="true" IsLocal="true">
+        		<AttachedAttribute Name="Password" IsOverridable="true" IsLocal="true" UserInput="true">
             		<AllowedValues />
           		</AttachedAttribute>
-        		<AttachedAttribute Name="User" IsOverridable="true" IsLocal="true">
+        		<AttachedAttribute Name="User" IsOverridable="true" IsLocal="true" UserInput="true">
             		<AllowedValues />
           		</AttachedAttribute>
 			</AttachedAttributes>
