@@ -49,34 +49,42 @@ class IxcHandler(object):
         reservation_id = context.reservation.reservation_id
         my_api = CloudShellSessionContext(context).get_api()
 
-        src_resources = []
-        dst_resources = []
+        src_resources = {}
+        dst_resources = {}
         for ep in tg_helper.get_reservation_ports(my_api, reservation_id, 'Traffic Generator Test IP'):
             logical_name = my_api.GetAttributeValue(ep.Name, 'Logical Name').Value.strip()
-            if logical_name.lower() in ['src', 'source']:
-                src_resources.append(ep.Name.split('/')[1])
-            elif logical_name.lower() in ['dst', 'destination']:
-                dst_resources.append(ep.Name.split('/')[1])
-            else:
-                self.logger.info('Ignore EP {} - logical name {} not in [src, source, dst, destination]'.
-                                 format(ep.Name, logical_name))
+            for end in logical_name.split():
+                flow_end = end.split('-')[0].lower()
+                flow_index = int(end.split('-')[1]) if len(end.split('-')) == 2 else 1
+                if flow_end in ['src', 'source']:
+                    src_resources.setdefault(flow_index, []).append(ep.Name.split('/')[1])
+                elif flow_end in ['dst', 'destination']:
+                    dst_resources.setdefault(flow_index, []).append(ep.Name.split('/')[1])
+                else:
+                    raise Exception('Invalid logical name {} - {} not in [src, source, dst, destination]'.
+                                    format(logical_name, flow_end))
 
-        if not src_resources:
-            raise Exception('No Src resources')
-        if not dst_resources:
-            raise Exception('No Dst resources')
+        flows_url = self._get_flows_url()
+        flows = self.session.httpGet(flows_url)
+        ids = [f.id for f in flows]
+        if sorted(src_resources) != sorted(ids):
+            raise Exception('Src resource ids {} do not match flow IDs {}'.format(src_resources, ids))
+        if sorted(dst_resources) != sorted(ids):
+            raise Exception('Dst resource ids {} do not match flow IDs {}'.format(dst_resources, ids))
+        for id_ in ids:
+            network_url = '{}/{}/network/'.format(flows_url, id_)
+            self.session.httpDelete(network_url + 'sourceEndpoints')
+            self.session.httpDelete(network_url + 'destinationEndpoints')
 
-        network_url = self._get_network_url()
-        self.session.httpDelete(network_url + 'sourceEndpoints')
-        self.session.httpDelete(network_url + 'destinationEndpoints')
+        for id_ in src_resources:
+            for src_ep in src_resources[id_]:
+                ep = self.ixchariotapi.getEndpointFromResourcesLibrary(self.session, src_ep)
+                self.session.httpPost('{}/{}/network/sourceEndpoints'.format(flows_url, id_), data=ep)
 
-        for src_ep in src_resources:
-            ep = self.ixchariotapi.getEndpointFromResourcesLibrary(self.session, src_ep)
-            self.session.httpPost(network_url + 'sourceEndpoints', data=ep)
-
-        for dst_ep in dst_resources:
-            ep = self.ixchariotapi.getEndpointFromResourcesLibrary(self.session, dst_ep)
-            self.session.httpPost(network_url + 'destinationEndpoints', data=ep)
+        for id_ in dst_resources:
+            for src_ep in dst_resources[id_]:
+                ep = self.ixchariotapi.getEndpointFromResourcesLibrary(self.session, src_ep)
+                self.session.httpPost('{}/{}/network/destinationEndpoints'.format(flows_url, id_), data=ep)
 
         # In case of multiple eps delay is required to make sure configuration completed (based on trial and error).
         time.sleep(4)
@@ -132,11 +140,11 @@ class IxcHandler(object):
     # Private auxiliary methods.
     #
 
-    def _get_network_url(self):
-        condif = self.session.httpGet('config/ixchariot')
-        if condif.appMixes:
-            return 'config/ixchariot/appMixes/1/network/'
-        elif condif.flowGroups:
-            return 'config/ixchariot/flowGroups/1/network/'
+    def _get_flows_url(self):
+        config = self.session.httpGet('config/ixchariot')
+        if config.appMixes:
+            return 'config/ixchariot/appMixes'
+        elif config.flowGroups:
+            return 'config/ixchariot/flowGroups'
         else:
-            return 'config/ixchariot/multicastGroups/1/network/'
+            return 'config/ixchariot/multicastGroups'
