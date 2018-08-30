@@ -22,8 +22,8 @@
         </Command>
         <Command Name="get_statistics" DisplayName="Get Statistics" Description="Get statistics view" >
          <Parameters>
-            	<Parameter Name="view_name" Type="String" Mandatory="True"
-                           DisplayName="View Name" Description="" />
+            	<Parameter Name="view_name" Type="String" Mandatory="True" DisplayName="View Name" Description="" />
+                <Parameter  Name="output_type" Type="Lookup" AllowedValues="CSV, PDF" DefaultValue="CSV" Description="CSV or PDF" DisplayName="Output Type" Mandatory="True" />
             </Parameters>
         </Command>
 

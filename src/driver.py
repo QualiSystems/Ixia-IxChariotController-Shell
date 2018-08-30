@@ -1,6 +1,4 @@
 
-import time
-
 from cloudshell.shell.core.session.cloudshell_session import CloudShellSessionContext
 
 from cloudshell.traffic.driver import TrafficControllerDriver
@@ -41,8 +39,14 @@ class IxChariotControllerDriver(TrafficControllerDriver):
 
         self.handler.stop_test()
 
-    def get_statistics(self, context, view_name):
-        return self.handler.get_statistics(context, view_name)
+    def get_statistics(self, context, view_name, output_type):
+        """ Get statistics for specific view.
+
+        :type context: cloudshell.shell.core.driver_context.ResourceRemoteCommandContext
+        :param view_name: requested statistics view name.
+        :param output_type: CSV/PDF.
+        """
+        return self.handler.get_statistics(context, view_name, output_type)
 
     def end_session(self, context):
         self.handler.end_session()

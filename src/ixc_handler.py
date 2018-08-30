@@ -5,7 +5,6 @@ import time
 import os
 import zipfile
 
-from cloudshell.shell.core.driver_context import AutoLoadDetails
 from cloudshell.shell.core.session.cloudshell_session import CloudShellSessionContext
 
 from cloudshell.traffic import tg_helper
@@ -33,14 +32,7 @@ class IxcHandler(object):
     def tearDown(self):
         self.del_session()
 
-    def get_inventory(self):
-        return AutoLoadDetails([], [])
-
     def load_config(self, context, ixc_config):
-        """
-        :param reservation_id: current reservation ID
-        :param ixc_config: IxChariot configuration name.
-        """
 
         self.session = self.connection.createSession('ixchariot')
         self.session.startSession()
@@ -93,9 +85,6 @@ class IxcHandler(object):
         return self.session.sessionId
 
     def start_test(self, blocking):
-        """
-        """
-
         if blocking.lower().strip() == 'true':
             self.result = self.session.runTest()
         else:
@@ -105,26 +94,29 @@ class IxcHandler(object):
     def stop_test(self):
         self.session.stopTest()
 
-    def get_statistics(self, context, view_name):
-        """
-        :type context: cloudshell.shell.core.driver_context.ResourceRemoteCommandContext
-        :param view_name: IxChariot results view to retrieve (csv file name in c:/temp/ixChariotTestResults.zip).
-        """
+    def get_statistics(self, context, view_name, output_type):
 
         reservation_id = context.reservation.reservation_id
         ts = time.ctime().replace(' ', '_').replace(':', '-')
-        filename = 'c:/temp/IxChariotShellResults/' + reservation_id + '/' + ts + '.zip'
+        filename = 'c:/temp/IxChariotShellResults/{}/{}'.format(reservation_id, ts)
         if not os.path.exists(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
 
-        with open(filename, "wb+") as statsFile:
-            self.connection.getStatsCsvZipToFile(self.result.testId, statsFile)
-
-        archive = zipfile.ZipFile(filename, 'r')
-        output = archive.read(view_name + '.csv')
-
-        tg_helper.attach_stats_csv(context, self.logger, view_name, output)
-        return output
+        if output_type == 'CSV':
+            filename += '.zip'
+            with open(filename, "wb+") as statsFile:
+                self.connection.getStatsCsvZipToFile(self.result.testId, statsFile)
+            archive = zipfile.ZipFile(filename, 'r')
+            output = archive.read(view_name + '.csv')
+            tg_helper.attach_stats_csv(context, self.logger, view_name, output)
+            return output
+        else:
+            filename += '.pdf'
+            self.ixchariotapi.generatePdfReport(self.connection, filename, 1, True, True, True, False, False, 0)
+            with open(filename, "r") as statsFile:
+                output = statsFile.read()
+            tg_helper.attach_stats_csv(context, self.logger, view_name, output, 'pdf')
+            return 'PDF created'
 
     def end_session(self):
         if self.session:
