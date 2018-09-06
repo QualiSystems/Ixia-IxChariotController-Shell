@@ -115,8 +115,7 @@ class IxcHandler(object):
             self.ixchariotapi.generatePdfReport(self.connection, filename, 1, True, True, True, False, False, 0)
             with open(filename, "r") as statsFile:
                 output = statsFile.read()
-            tg_helper.attach_stats_csv(context, self.logger, view_name, output, 'pdf')
-            return 'PDF created'
+            return tg_helper.attach_stats_csv(context, self.logger, view_name, output, 'pdf')
 
     def end_session(self):
         if self.session:

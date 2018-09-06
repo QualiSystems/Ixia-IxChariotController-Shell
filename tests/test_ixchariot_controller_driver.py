@@ -7,20 +7,19 @@ from cloudshell.traffic import tg_helper
 from driver import IxChariotControllerDriver
 
 
-client_install_path = 'C:/Program Files (x86)/Ixia/IxChariot/webapi-95'
-address = '192.168.42.191'
-user = 'yoram-s@qualisystems.com'
-password = 'Zoliro123'
-
 client_install_path = 'C:/Program Files (x86)/Ixia/IxChariot/webapi-96'
 address = '192.168.42.165'
 user = 'admin'
 password = 'admin'
+ports = ['ixchariot 96/Endpoint 1/192.168.15.23', 'ixchariot 96/Endpoint 2/192.168.42.61']
 
-ports = ['ixchariot 95/QS-IL-YORAM/192.168.15.23', 'ixchariot 95/QS-SRV-IXserver/192.168.42.61']
+client_install_path = 'C:/Program Files (x86)/Ixia/IxChariot/webapi-95'
+address = '192.168.42.191'
+user = 'yoram-s@qualisystems.com'
+password = 'Zoliro123'
 ports = ['ixchariot 95/QS-IL-YORAM/192.168.15.23', 'ixchariot 95/QS-SRV-IXserver/192.168.42.61',
          'ixchariot 95/QS-IL-YORAM/QS-IL-YORAM', 'ixchariot 95/QS-SRV-IXserver/QS-SRV-IXserver']
-ports = ['ixchariot 96/Endpoint 1/192.168.15.23', 'ixchariot 96/Endpoint 2/192.168.42.61']
+
 
 attributes = {'Client Install Path': client_install_path,
               'Controller Address': address,
@@ -47,47 +46,27 @@ class TestIxChariotControllerDriver():
         pass
 
     def test_load_config(self):
-        reservation_ports = tg_helper.get_reservation_ports(self.session, self.context.reservation.reservation_id,
-                                                            'Traffic Generator Test IP')
-        self.session.SetAttributeValue(reservation_ports[0].Name, 'Logical Name', 'Src')
-        self.session.SetAttributeValue(reservation_ports[1].Name, 'Logical Name', 'Dst')
-        self.session.SetAttributeValue(reservation_ports[2].Name, 'Logical Name', 'Src')
-        self.session.SetAttributeValue(reservation_ports[3].Name, 'Logical Name', 'Dst')
-        print self.driver.load_config(self.context, 'two_eps')
+        print 'New session ID = {}'.format(self._load_config('simple_config', {0: 'Src', 1: 'Dst'}))
 
-    def test_run_test(self):
-
-        reservation_ports = tg_helper.get_reservation_ports(self.session, self.context.reservation.reservation_id,
-                                                            'Traffic Generator Test IP')
-        self.session.SetAttributeValue(reservation_ports[0].Name, 'Logical Name', 'Src')
-        self.session.SetAttributeValue(reservation_ports[1].Name, 'Logical Name', 'Dst')
-        self.session.SetAttributeValue(reservation_ports[2].Name, 'Logical Name', 'Src')
-        self.session.SetAttributeValue(reservation_ports[3].Name, 'Logical Name', 'Dst')
-        self.driver.load_config(self.context, 'two_eps')
-
-        self.driver.start_test(self.context, 'False')
-        self.driver.stop_test(self.context)
-        print self.driver.get_statistics(self.context, 'ixchariot')
-
+    def test_run_and_stats(self):
+        self._load_config('simple_config', {0: 'Src', 1: 'Dst'})
         self.driver.start_test(self.context, 'True')
-        print self.driver.get_statistics(self.context, 'ixchariot')
+        print self.driver.get_statistics(self.context, 'ixchariot', 'CSV')
+        print self.driver.get_statistics(self.context, 'ixchariot', 'PDF')
+
+    def test_two_eps_per_flow(self):
+        self._load_config('two_eps', {0: 'Src', 1: 'Dst', 2: 'Src', 3: 'Dst'})
+        self.driver.start_test(self.context, 'True')
+        print self.driver.get_statistics(self.context, 'ixchariot', 'CSV')
 
     def test_two_flows(self):
+        self._load_config('two_flows', {0: 'Src-1 Dst-2', 1: 'Dst-1 Src-2'})
+        self.driver.start_test(self.context, 'True')
+        print self.driver.get_statistics(self.context, 'ixchariot', 'CSV')
+
+    def _load_config(self, config, ports):
         reservation_ports = tg_helper.get_reservation_ports(self.session, self.context.reservation.reservation_id,
                                                             'Traffic Generator Test IP')
-        self.session.SetAttributeValue(reservation_ports[0].Name, 'Logical Name', 'Src-1 Dst-2')
-        self.session.SetAttributeValue(reservation_ports[1].Name, 'Logical Name', 'Dst-1 Src-2')
-        self.driver.load_config(self.context, 'two_flows')
-
-        self.driver.start_test(self.context, 'True')
-        print self.driver.get_statistics(self.context, 'ixchariot')
-
-    def test_pdf_report(self):
-
-        reservation_ports = tg_helper.get_reservation_ports(self.session, self.context.reservation.reservation_id,
-                                                            'Traffic Generator Test IP')
-        self.session.SetAttributeValue(reservation_ports[0].Name, 'Logical Name', 'Src')
-        self.session.SetAttributeValue(reservation_ports[1].Name, 'Logical Name', 'Dst')
-        self.driver.load_config(self.context, 'simple_config')
-        self.driver.start_test(self.context, 'True')
-        self.driver.get_statistics(self.context, 'ixchariot', 'PDF')
+        for index, name in ports.items():
+            self.session.SetAttributeValue(reservation_ports[index].Name, 'Logical Name', name)
+        return self.driver.load_config(self.context, config)
