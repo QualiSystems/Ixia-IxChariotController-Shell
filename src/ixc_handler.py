@@ -7,7 +7,7 @@ import zipfile
 
 from cloudshell.shell.core.session.cloudshell_session import CloudShellSessionContext
 
-from cloudshell.traffic import tg_helper
+from cloudshell.traffic.tg_helper import get_reservation_resources, attach_stats_csv
 
 
 class IxcHandler(object):
@@ -18,7 +18,8 @@ class IxcHandler(object):
 
         address = context.resource.attributes['Controller Address']
         username = context.resource.attributes['User']
-        password = context.resource.attributes['Password']
+        encripted_password = context.resource.attributes['Password']
+        password = CloudShellSessionContext(context).get_api().DecryptPassword(encripted_password).Value
         client_install_path = context.resource.attributes['Client Install Path']
 
         sys.path.append(client_install_path)
@@ -43,15 +44,15 @@ class IxcHandler(object):
 
         src_resources = {}
         dst_resources = {}
-        for ep in tg_helper.get_reservation_ports(my_api, reservation_id, 'Traffic Generator Test IP'):
+        for ep in get_reservation_resources(my_api, reservation_id, 'Traffic Generator Test IP'):
             logical_name = my_api.GetAttributeValue(ep.Name, 'Logical Name').Value.strip()
             for end in logical_name.split():
                 flow_end = end.split('-')[0].lower()
                 flow_index = int(end.split('-')[1]) if len(end.split('-')) == 2 else 1
                 if flow_end in ['src', 'source']:
-                    src_resources.setdefault(flow_index, []).append(ep.Name.split('/')[1])
+                    src_resources.setdefault(flow_index, []).append(ep.Name)
                 elif flow_end in ['dst', 'destination']:
-                    dst_resources.setdefault(flow_index, []).append(ep.Name.split('/')[1])
+                    dst_resources.setdefault(flow_index, []).append(ep.Name)
                 else:
                     raise Exception('Invalid logical name {} - {} not in [src, source, dst, destination]'.
                                     format(logical_name, flow_end))
@@ -70,12 +71,12 @@ class IxcHandler(object):
 
         for id_ in src_resources:
             for src_ep in src_resources[id_]:
-                ep = self.ixchariotapi.getEndpointFromResourcesLibrary(self.session, src_ep)
+                ep = self.ixchariotapi.createEndpoint(src_ep.split('/')[2], src_ep.split('/')[1])
                 self.session.httpPost('{}/{}/network/sourceEndpoints'.format(flows_url, id_), data=ep)
 
         for id_ in dst_resources:
             for src_ep in dst_resources[id_]:
-                ep = self.ixchariotapi.getEndpointFromResourcesLibrary(self.session, src_ep)
+                ep = self.ixchariotapi.createEndpoint(src_ep.split('/')[2], src_ep.split('/')[1])
                 self.session.httpPost('{}/{}/network/destinationEndpoints'.format(flows_url, id_), data=ep)
 
         # In case of multiple eps delay is required to make sure configuration completed (based on trial and error).
@@ -108,14 +109,14 @@ class IxcHandler(object):
                 self.connection.getStatsCsvZipToFile(self.result.testId, statsFile)
             archive = zipfile.ZipFile(filename, 'r')
             output = archive.read(view_name + '.csv')
-            tg_helper.attach_stats_csv(context, self.logger, view_name, output)
+            attach_stats_csv(context, self.logger, view_name, output)
             return output
         else:
             filename += '.pdf'
             self.ixchariotapi.generatePdfReport(self.connection, filename, 1, True, True, True, False, False, 0)
             with open(filename, "r") as statsFile:
                 output = statsFile.read()
-            return tg_helper.attach_stats_csv(context, self.logger, view_name, output, 'pdf')
+            return attach_stats_csv(context, self.logger, view_name, output, 'pdf')
 
     def end_session(self):
         if self.session:
