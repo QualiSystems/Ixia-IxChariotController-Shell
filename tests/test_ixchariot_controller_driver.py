@@ -6,13 +6,18 @@ from shellfoundry.releasetools.test_helper import create_session_from_cloudshell
 from cloudshell.traffic import tg_helper
 from driver import IxChariotControllerDriver
 
-client_install_path = 'C:/Program Files (x86)/Ixia/IxChariot/webapi-96'
+client_install_path = 'E:/Program Files (x86)/Ixia/IxChariot/webapi-96'
+
 address = '192.168.42.167'
 user = 'admin'
 password = 'DxTbqlSgAVPmrDLlHvJrsA=='
-
 ports = ['ixchariot 96/Yoram-PC/192.168.15.23', 'ixchariot 96/IxServer/192.168.42.61',
          'ixchariot 96/Yoram-PC/localhost', 'ixchariot 96/IxServer/localhost']
+
+address = 'ixchariot.airties.com'
+user = 'ixchariot-testshell@airties.com'
+password = 'mz3tnEMx9gVaoG6NmMAkFA=='
+ports = ['airties/A43-PC-MKOY/192.168.2.21', 'airties/A27-PC-MKOY/192.168.2.17']
 
 
 attributes = {'Client Install Path': client_install_path,
@@ -24,7 +29,6 @@ attributes = {'Client Install Path': client_install_path,
 class TestIxChariotControllerDriver():
 
     def setup(self):
-
         logging.getLogger().setLevel(logging.DEBUG)
         logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
         self.session = create_session_from_cloudshell_config()
@@ -43,7 +47,7 @@ class TestIxChariotControllerDriver():
         print 'New session ID = {}'.format(self._load_config('simple_config', {0: 'Src', 1: 'Dst', 2: '', 3: ''}))
 
     def test_run_and_stats(self):
-        self._load_config('simple_config', {0: 'Src', 1: 'Dst', 2: '', 3: ''})
+        self._load_config('TestShell_Unicast_UDP_2min', {0: 'Src', 1: 'Dst'})
         self.driver.start_test(self.context, 'True')
         print self.driver.get_statistics(self.context, 'ixchariot', 'CSV')
         print self.driver.get_statistics(self.context, 'ixchariot', 'PDF')

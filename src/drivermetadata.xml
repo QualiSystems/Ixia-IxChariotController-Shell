@@ -1,29 +1,27 @@
-<Driver Description="Shell to run IxChariot tssts" MainClass="driver.IxChariotControllerDriver" Name="IxChariotControllerDriver" Version="1.1.3">
+<Driver Description="Shell to run IxChariot tssts" MainClass="driver.IxChariotControllerDriver" Name="IxChariotControllerDriver" Version="1.2.0">
     <Layout>
          <Category Name="Hidden Commands">
-            <Command Name="keep_alive" DisplayName="Keep Alive" Tags="" Description="" EnableCancellation="true"/>
+            <Command Description="" DisplayName="Keep Alive" EnableCancellation="true" Name="keep_alive" Tags="" />
             <Command Name="end_session" />
             <Command Name="del_session" />
         </Category>
 
-		<Command Name="load_config" DisplayName="Load configuration" Description="Reserve endpoints and load configuration" >
+		<Command Description="Reserve endpoints and load configuration" DisplayName="Load configuration" Name="load_config">
 	    	<Parameters>
-            	<Parameter Name="ixc_config" Type="String" Mandatory="True"
-                           DisplayName="IxChariot Config" Description="IxChariot config to load" />
+            	<Parameter Description="IxChariot config to load" DisplayName="IxChariot Config" Mandatory="True" Name="ixc_config" Type="String" />
             </Parameters>
         </Command>
-        <Command Name="start_test" DisplayName="Start Test" Description="">
+        <Command Description="" DisplayName="Start Test" Name="start_test">
             <Parameters>
-            	<Parameter Name="blocking" Type="Lookup" Mandatory="False" AllowedValues="True,False" DefaultValue="True"
-                           DisplayName="Block the command until test finish to run" Description="" />
+            	<Parameter AllowedValues="True,False" DefaultValue="True" Description="" DisplayName="Block the command until test finish to run" Mandatory="False" Name="blocking" Type="Lookup" />
             </Parameters>
         </Command>
-        <Command Name="stop_test" DisplayName="Stop Test" Description="">
+        <Command Description="" DisplayName="Stop Test" Name="stop_test">
         </Command>
-        <Command Name="get_statistics" DisplayName="Get Statistics" Description="Get statistics view" >
+        <Command Description="Get statistics view" DisplayName="Get Statistics" Name="get_statistics">
          <Parameters>
-            	<Parameter Name="view_name" Type="String" Mandatory="True" DisplayName="View Name" Description="" />
-                <Parameter  Name="output_type" Type="Lookup" AllowedValues="CSV, PDF" DefaultValue="CSV" Description="CSV or PDF" DisplayName="Output Type" Mandatory="True" />
+            	<Parameter Description="" DisplayName="View Name" Mandatory="True" Name="view_name" Type="String" />
+                <Parameter AllowedValues="CSV, PDF" DefaultValue="CSV" Description="CSV or PDF" DisplayName="Output Type" Mandatory="True" Name="output_type" Type="Lookup" />
             </Parameters>
         </Command>
 

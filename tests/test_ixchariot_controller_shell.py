@@ -4,12 +4,18 @@ from cloudshell.traffic.tg_helper import get_reservation_resources, set_family_a
 from shellfoundry.releasetools.test_helper import (create_session_from_cloudshell_config, create_command_context,
                                                    end_reservation)
 
-client_install_path = 'C:/Program Files (x86)/Ixia/IxChariot/webapi-96'
+client_install_path = 'E:/Program Files (x86)/Ixia/IxChariot/webapi-96'
+
 address = '192.168.42.167'
 user = 'admin'
 password = 'admin'
 ports = ['ixchariot 96/Yoram-PC/192.168.15.23', 'ixchariot 96/IxServer/192.168.42.61',
          'ixchariot 96/Yoram-PC/localhost', 'ixchariot 96/IxServer/localhost']
+
+address = 'ixchariot.airties.com'
+user = 'ixchariot-testshell@airties.com'
+password = 'QAteam2017'
+ports = ['airties/A43-PC-MKOY/192.168.2.21', 'airties/A27-PC-MKOY/192.168.2.17']
 
 attributes = [AttributeNameValue('Client Install Path', client_install_path),
               AttributeNameValue('Controller Address', address),
@@ -30,7 +36,7 @@ class TestIxChariotControllerShell():
         self._load_config('simple_config', {0: 'Src', 1: 'Dst', 2: '', 3: ''})
 
     def test_run_and_stats(self):
-        self._load_config('simple_config', {0: 'Src', 1: 'Dst', 2: '', 3: ''})
+        self._load_config('TestShell_Unicast_UDP_2min', {0: 'Src', 1: 'Dst'})
         self.session.ExecuteCommand(self.context.reservation.reservation_id, 'IxChariot Controller', 'Service',
                                     'start_test', [InputNameValue('blocking', 'True')])
         self.session.ExecuteCommand(self.context.reservation.reservation_id, 'IxChariot Controller', 'Service',

@@ -44,15 +44,19 @@ class IxcHandler(object):
 
         src_resources = {}
         dst_resources = {}
-        for ep in get_reservation_resources(my_api, reservation_id, 'Traffic Generator Test IP'):
-            logical_name = my_api.GetAttributeValue(ep.Name, 'Logical Name').Value.strip()
+        mips = {}
+        for tip in get_reservation_resources(my_api, reservation_id, 'Traffic Generator Test IP'):
+            ep = my_api.GetResourceDetails('/'.join(tip.Name.split('/')[:-1]))
+            logical_name = my_api.GetAttributeValue(tip.Name, 'Logical Name').Value.strip()
             for end in logical_name.split():
                 flow_end = end.split('-')[0].lower()
                 flow_index = int(end.split('-')[1]) if len(end.split('-')) == 2 else 1
                 if flow_end in ['src', 'source']:
-                    src_resources.setdefault(flow_index, []).append(ep.Name)
+                    mips[tip.Name] = my_api.GetAttributeValue(ep.Name, 'Management IP').Value
+                    src_resources.setdefault(flow_index, []).append(tip.Name)
                 elif flow_end in ['dst', 'destination']:
-                    dst_resources.setdefault(flow_index, []).append(ep.Name)
+                    mips[tip.Name] = my_api.GetAttributeValue(ep.Name, 'Management IP').Value
+                    dst_resources.setdefault(flow_index, []).append(tip.Name)
                 else:
                     raise Exception('Invalid logical name {} - {} not in [src, source, dst, destination]'.
                                     format(logical_name, flow_end))
@@ -71,12 +75,12 @@ class IxcHandler(object):
 
         for id_ in src_resources:
             for src_ep in src_resources[id_]:
-                ep = self.ixchariotapi.createEndpoint(src_ep.split('/')[2], src_ep.split('/')[1])
+                ep = self.ixchariotapi.createEndpoint(src_ep.split('/')[2], mips[src_ep])
                 self.session.httpPost('{}/{}/network/sourceEndpoints'.format(flows_url, id_), data=ep)
 
         for id_ in dst_resources:
-            for src_ep in dst_resources[id_]:
-                ep = self.ixchariotapi.createEndpoint(src_ep.split('/')[2], src_ep.split('/')[1])
+            for dst_ep in dst_resources[id_]:
+                ep = self.ixchariotapi.createEndpoint(dst_ep.split('/')[2], mips[dst_ep])
                 self.session.httpPost('{}/{}/network/destinationEndpoints'.format(flows_url, id_), data=ep)
 
         # In case of multiple eps delay is required to make sure configuration completed (based on trial and error).
